@@ -110,6 +110,7 @@ namespace SprintRetroServer
                 return new OkObjectResult(retroEntity);
             }
 
+            log.LogInformation($"Item not found");
             return new ConflictResult();
         }
 
@@ -139,7 +140,8 @@ namespace SprintRetroServer
                 return new OkResult();
             }
 
-            return new ConflictResult();
+            log.LogInformation($"Item {decryptPk} not found");
+            return new NotFoundResult();
         }
     }
 }
