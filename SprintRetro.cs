@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Azure.Cosmos.Table;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Web;
 
 namespace SprintRetroServer
 {
@@ -19,6 +20,8 @@ namespace SprintRetroServer
         private static readonly CloudTableClient client = account.CreateCloudTableClient();
 
         private static readonly CloudTable table = client.GetTableReference("retros");
+
+        private static readonly string keyString = Environment.GetEnvironmentVariable("keyString", EnvironmentVariableTarget.Process);
 
         public SprintRetro()
         {
@@ -35,11 +38,11 @@ namespace SprintRetroServer
             var retroEntity = JsonConvert.DeserializeObject<RetroEntity>(requestBody);
 
             var message = retroEntity.message;
-            var decryptMessage = HelperUtil.DecryptStringAES(message, "");
+            var decryptMessage = HelperUtil.DecryptStringAES(message, keyString);
             retroEntity.message = decryptMessage;
 
             var headerData = retroEntity.headerData;
-            var decryptHeaderData = HelperUtil.DecryptStringAES(headerData, "");
+            var decryptHeaderData = HelperUtil.DecryptStringAES(headerData, keyString);
             retroEntity.headerData = decryptHeaderData;
 
             TableOperation insertOperation = TableOperation.Insert(retroEntity.ToRetroTableEntity());
@@ -59,14 +62,20 @@ namespace SprintRetroServer
         {
             log.LogInformation("Getting retro item by header data");
 
-            var decryptPk = HelperUtil.DecryptStringAES(pk, "");
+            var decryptPk = HelperUtil.DecryptStringAES(pk, keyString);
+
+            if (decryptPk.Equals("keyError"))
+            {
+                log.LogInformation($"keyError");
+                return new ConflictResult();
+            }
 
             var condition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, decryptPk);
             var query = new TableQuery<RetroTableEntity>().Where(condition);
 
             var tableResults = await table.ExecuteQuerySegmentedAsync<RetroTableEntity>(query, null);
 
-            if (tableResults.Results == null)
+            if (tableResults.Results == null || tableResults.Results.Count == 0)
             {
                 log.LogInformation($"Item {pk} not found");
                 return new NotFoundResult();
@@ -77,8 +86,8 @@ namespace SprintRetroServer
 
             foreach (var retro in retroEntities)
             {
-                retro.message = HelperUtil.EncryptStringAES(retro.message, "");
-                retro.headerData = HelperUtil.EncryptStringAES(retro.headerData, "");
+                retro.message = HelperUtil.EncryptStringAES(retro.message, keyString);
+                retro.headerData = HelperUtil.EncryptStringAES(retro.headerData, keyString);
             }
 
             return new OkObjectResult(retroEntities);
@@ -94,11 +103,11 @@ namespace SprintRetroServer
             var retroEntity = JsonConvert.DeserializeObject<RetroEntity>(requestBody);
 
             var message = retroEntity.message;
-            var decryptMessage = HelperUtil.DecryptStringAES(message, "");
+            var decryptMessage = HelperUtil.DecryptStringAES(message, keyString);
             retroEntity.message = decryptMessage;
 
             var headerData = retroEntity.headerData;
-            var decryptHeaderData = HelperUtil.DecryptStringAES(headerData, "");
+            var decryptHeaderData = HelperUtil.DecryptStringAES(headerData, keyString);
             retroEntity.headerData = decryptHeaderData;
 
             TableOperation insertOperation = TableOperation.InsertOrReplace(retroEntity.ToRetroTableEntity());
@@ -120,11 +129,11 @@ namespace SprintRetroServer
         {
             log.LogInformation("deleting retro item by header data");
 
-            var decryptPk = HelperUtil.DecryptStringAES(pk, "");
+            var decryptPk = HelperUtil.DecryptStringAES(pk, keyString);
 
             RetroEntity retroEntity = new RetroEntity
             {
-                id = key,
+                id = HttpUtility.HtmlDecode(key),
                 headerData = decryptPk
             };
 

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Web;
 
 namespace SprintRetroServer
 {
@@ -11,19 +13,19 @@ namespace SprintRetroServer
         {
             if (string.IsNullOrWhiteSpace(keyString))
             {
-                keyString = "6798890179734834";
+                throw new ArgumentException("key string missing to decrypt!");
             }
 
             cipherText = cipherText.Trim().Replace("vnaa", "/");
 
             byte[] keybytes = Encoding.UTF8.GetBytes(keyString);
             byte[] iv = Encoding.UTF8.GetBytes(keyString);
+                        
+            var encrypted = Convert.FromBase64String(Uri.UnescapeDataString(cipherText));
 
-            var encrypted = Convert.FromBase64String(cipherText);
             var decryptedFromJavascript = DecryptStringFromBytes(encrypted, keybytes, iv);
             return decryptedFromJavascript.Trim('\"');
-        }
-
+        }        
         private static string DecryptStringFromBytes(byte[] cipherText, byte[] key, byte[] iv)
         {
             // Check arguments.
@@ -82,7 +84,7 @@ namespace SprintRetroServer
         {
             if (string.IsNullOrWhiteSpace(keyString))
             {
-                keyString = "6798890179734834";
+                throw new ArgumentException("key string missing to encrypt!");
             }
 
             var keybytes = Encoding.UTF8.GetBytes(keyString);
