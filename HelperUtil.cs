@@ -9,6 +9,31 @@ namespace SprintRetroServer
 {
     public static class HelperUtil
     {
+        public static string DecryptHeaderDataPk(string headerData)
+        {
+            string output = string.Empty;
+            for (int i = 0; i < headerData.Length; i += 2)
+            {
+                var twoNumbers = headerData.Substring(i, 2);
+                var oneChar = Convert.ToChar(Convert.ToInt32(twoNumbers));
+                output = $"{output}{oneChar}";
+            }
+            return output;
+        }
+
+        public static string EncryptHeaderDataPk(string headerData)
+        {
+            string finalValue = string.Empty;
+            int value;
+            foreach (char c in headerData)
+            {
+                value = Convert.ToInt32(c);
+                finalValue += value.ToString();
+            }
+
+            return finalValue;
+        }
+
         public static string DecryptStringAES(string cipherText, string keyString)
         {
             if (string.IsNullOrWhiteSpace(keyString))

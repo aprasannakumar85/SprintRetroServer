@@ -42,7 +42,7 @@ namespace SprintRetroServer
             retroEntity.message = decryptMessage;
 
             var headerData = retroEntity.headerData;
-            var decryptHeaderData = HelperUtil.DecryptStringAES(headerData, keyString);
+            var decryptHeaderData = HelperUtil.DecryptHeaderDataPk(headerData);
             retroEntity.headerData = decryptHeaderData;
 
             TableOperation insertOperation = TableOperation.Insert(retroEntity.ToRetroTableEntity());
@@ -62,7 +62,7 @@ namespace SprintRetroServer
         {
             log.LogInformation("Getting retro item by header data");
 
-            var decryptPk = HelperUtil.DecryptStringAES(pk, keyString);
+            var decryptPk = HelperUtil.DecryptHeaderDataPk(pk);
 
             if (decryptPk.Equals("keyError"))
             {
@@ -87,7 +87,7 @@ namespace SprintRetroServer
             foreach (var retro in retroEntities)
             {
                 retro.message = HelperUtil.EncryptStringAES(retro.message, keyString);
-                retro.headerData = HelperUtil.EncryptStringAES(retro.headerData, keyString);
+                retro.headerData = HelperUtil.EncryptHeaderDataPk(retro.headerData);
             }
 
             return new OkObjectResult(retroEntities);
@@ -107,7 +107,7 @@ namespace SprintRetroServer
             retroEntity.message = decryptMessage;
 
             var headerData = retroEntity.headerData;
-            var decryptHeaderData = HelperUtil.DecryptStringAES(headerData, keyString);
+            var decryptHeaderData = HelperUtil.DecryptHeaderDataPk(headerData);
             retroEntity.headerData = decryptHeaderData;
 
             TableOperation insertOperation = TableOperation.InsertOrReplace(retroEntity.ToRetroTableEntity());
@@ -129,7 +129,7 @@ namespace SprintRetroServer
         {
             log.LogInformation("deleting retro item by header data");
 
-            var decryptPk = HelperUtil.DecryptStringAES(pk, keyString);
+            var decryptPk = HelperUtil.DecryptHeaderDataPk(pk);
 
             RetroEntity retroEntity = new RetroEntity
             {
